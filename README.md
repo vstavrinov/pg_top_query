@@ -23,7 +23,7 @@ after pulling this repository. To remove is not less easy:
 
 ## Usage.
 
-Do configure zabbix with key `pg_top.query` and see "latest data" or become postgres user:
+Do configure zabbix with key `pg_top.query` (don't forget restart zabbix_agentd on target server) and see "latest data" or become postgres user:
 
 `su - postgres`
 
