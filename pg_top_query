@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #    Postgres Top Query. Monitoring tool for PostgreSQL database server.
-#	 Prints full sql code for top query and other related parameters.
+#    Prints full sql code for top query and other related parameters.
 #    Copyright (C) 2017 Vladimir Stavrinov <vstavrinov@gamil.com>
 #
 #    This program is free software: you can redistribute it and/or modify
