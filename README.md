@@ -6,8 +6,8 @@ Monitoring tool for PostgreSQL database server. Prints full sql code for the que
 
 Requirements include software it depends on:
 
-[pg_top](http://ptop.projects.pgfoundry.org/)
-[sql-formatter](https://github.com/jdorn/sql-formatter)
+* [pg_top](http://ptop.projects.pgfoundry.org/)
+* [sql-formatter](https://github.com/jdorn/sql-formatter)
 
 They both are available in most Linux distributions as packages. 
 
