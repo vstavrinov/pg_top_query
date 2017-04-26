@@ -1,0 +1,8 @@
+##
+
+Defaults:zabbix    !requiretty
+Defaults:postgres    !requiretty
+zabbix  ALL=(postgres) NOPASSWD: /usr/local/bin/pg_top_query
+postgres  ALL=(ALL) NOPASSWD: /usr/bin/netstat
+
+# vim: filetype=sudoers

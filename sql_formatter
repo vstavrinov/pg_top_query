@@ -1,0 +1,6 @@
+#!/usr/bin/php
+<?php
+$sql = stream_get_contents(fopen("php://stdin", "r"));
+require_once '/usr/share/php/jdorn-sql-formatter/autoload.php';
+echo SqlFormatter::format($sql, false);
+?>

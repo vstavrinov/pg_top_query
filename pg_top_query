@@ -1,0 +1,122 @@
+#!/bin/bash
+
+#    Postgres Top Query. Monitoring tool for PostgreSQL database server.
+#	 Prints full sql code for top query and other related parameters.
+#    Copyright (C) 2017 Vladimir Stavrinov <vstavrinov@gamil.com>
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+VERSION=0.0.0
+
+unset TERM
+
+POSITION=$1
+: ${POSITION:=1}
+
+HEAD="PID USERNAME PRI NICE  SIZE   RES STATE   TIME   WCPU    CPU COMMAND"
+
+TOP=$(
+    pg_top -qIbx1 "$HEAD" | 
+    grep -A$POSITION "$HEAD"|
+    tail -1
+)
+
+eval $(
+    echo "$TOP" |
+    while read $HEAD; do
+        echo "
+            PID=$PID
+            RES=$RES
+            STATE=$STATE
+            TIME=$TIME
+            CPU=$CPU
+        "
+    done
+)
+
+eval $(
+    unset PAGER
+    echo "
+    SELECT
+        datname,
+        usename,
+        state,
+        backend_start,
+        xact_start,
+        query_start,
+        client_hostname,
+        client_addr,
+        client_port
+    FROM pg_stat_activity
+    WHERE 
+        pid = $PID
+        AND pid <> pg_backend_pid();
+    " | 
+    psql -tAx |
+    awk -cF\| '{print $1"=""\""$2"\""}'
+)
+
+REGEX=".*$client_hostname:$client_port +([0-9]{1,3}.){3}[0-9]{1,3}:[0-9]{1,5} +ESTABLISHED"
+client_cmd=$(ps ho cmd $(
+    sudo netstat -tunp |
+    awk "/$REGEX +[0-9]+\/.*/ {
+        print(gensub(\"$REGEX +([0-9]+)/.*\", \"\\\2\", 1));
+    }"
+) | tr " " \\001)
+
+backend_runtime=$((($(date +%s%N)-$(date -d "$backend_start" +%s%N))/1000000))
+[ -n "$xact_start" ] &&
+xact_runtime="$((($(date +%s%N)-$(date -d "$xact_start" +%s%N))/1000000))\\001ms"
+query_runtime=$((($(date +%s%N)-$(date -d "$query_start" +%s%N))/1000000))
+backend_start=$(echo "$backend_start" | tr " " \\001)
+xact_start=$(echo "$xact_start" | tr " " \\001)
+query_start=$(echo "$query_start" | tr " " \\001)
+
+echo
+echo -e "
+--    PID: $PID
+--    RES: $RES
+--    STATE: $STATE
+--    TIME: $TIME
+--    CPU: $CPU
+--    datname: $datname
+--    usename: $usename
+--    state: $state
+--    backend_start: $backend_start
+--    xact_start: $xact_start
+--    query_start: $query_start
+--    backend_runtime: ${backend_runtime}\\001ms
+--    xact_runtime: ${xact_runtime}
+--    query_runtime: ${query_runtime}\\001ms
+--    client_hostname: $client_hostname
+--    client_addr: $client_addr
+--    client_port: $client_port
+--    client_cmd: $client_cmd
+" |
+column -t |
+tr \\001 " "
+echo
+
+unset PAGER
+echo "
+SELECT query
+FROM pg_stat_activity
+WHERE 
+    pid = $PID
+    AND pid <> pg_backend_pid();
+" |
+psql -tA |
+sql_formatter
+echo "
+"
