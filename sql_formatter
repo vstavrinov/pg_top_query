@@ -1,6 +1,20 @@
 #!/usr/bin/php
 <?php
 $sql = stream_get_contents(fopen("php://stdin", "r"));
-require_once '/usr/share/php/jdorn-sql-formatter/autoload.php';
-echo SqlFormatter::format($sql, false);
+
+$rpm = "/usr/share/php/jdorn-sql-formatter/autoload.php";
+$deb = "/usr/share/php/SqlFormatter/autoload.php";
+
+if (file_exists($rpm)) {
+    $loader = $rpm;
+} else if (file_exists($deb)) {
+    $loader = $deb;
+}
+
+if (isset($loader)) {
+    require_once $loader;
+    echo SqlFormatter::format($sql, false);
+} else  {
+    echo $sql;
+}
 ?>
