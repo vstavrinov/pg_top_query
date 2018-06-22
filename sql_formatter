@@ -2,7 +2,7 @@
 <?php
 $sql = stream_get_contents(fopen("php://stdin", "r"));
 
-$rpm = "/usr/share/php/jdorn-sql-formatter/autoload.php";
+$rpm = "/usr/share/php/jdorn-sql-formatter/SqlFormatter.php";
 $deb = "/usr/share/php/SqlFormatter/autoload.php";
 
 if (file_exists($rpm)) {
