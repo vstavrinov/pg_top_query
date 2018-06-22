@@ -17,7 +17,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-VERSION=0.0.2
+VERSION=0.0.3
 
 unset TERM
 
@@ -27,10 +27,12 @@ POSITION=$1
 HEAD="PID USERNAME PRI NICE  SIZE   RES STATE   TIME   WCPU    CPU COMMAND"
 
 TOP=$(
-    pg_top -qIbx1 "$HEAD" | 
+    pg_top -qIbx1 1 | 
     grep -A$POSITION "$HEAD"|
     tail -1
 )
+
+[ -z "$TOP" ] && exit
 
 eval $(
     echo "$TOP" |
@@ -86,6 +88,18 @@ backend_start=$(echo "$backend_start" | tr " " \\001)
 xact_start=$(echo "$xact_start" | tr " " \\001)
 query_start=$(echo "$query_start" | tr " " \\001)
 
+QUERY=$(unset PAGER
+echo "
+SELECT query
+FROM pg_stat_activity
+WHERE 
+    pid = $PID
+    AND pid <> pg_backend_pid();
+" |
+psql -tA)
+
+[ -z "$QUERY" ] && exit
+
 echo
 echo -e "
 --    PID: $PID
@@ -111,15 +125,7 @@ column -t |
 tr \\001 " "
 echo
 
-unset PAGER
-echo "
-SELECT query
-FROM pg_stat_activity
-WHERE 
-    pid = $PID
-    AND pid <> pg_backend_pid();
-" |
-psql -tA |
+echo "$QUERY" |
 sql_formatter
 echo "
 "
